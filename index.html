@@ -5,26 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Camp Flog Gnaw 2025 Fantasy Lineup</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-image: url('https://raw.githubusercontent.com/Barnes01/FantasyFlogGnaw/main/background.png'); /* Replace with your uploaded image URL */
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+  </style>
 </head>
-<body class="bg-gradient-to-b from-orange-300 via-red-400 to-black min-h-screen text-white font-sans">
-  <div class="max-w-2xl mx-auto p-6">
+<body class="bg-black bg-opacity-70 min-h-screen text-white font-sans">
+  <div class="max-w-2xl mx-auto p-6 bg-black bg-opacity-70 rounded-xl shadow-lg mt-8">
     <h1 class="text-4xl font-bold text-center mb-4">Camp Flog Gnaw 2025 Fantasy Lineup</h1>
-    <p class="text-center mb-6">Pick your fantasy lineup! Tyler, The Creator is automatically included as a headliner. Select up to 30 artists (minimum 20).</p>
+    <p class="text-center mb-6">Pick your fantasy lineup! Tyler, The Creator is automatically included as a headliner. Fill in up to 30 artists (minimum 20).</p>
 
     <form id="lineupForm" class="space-y-4">
       <div>
-        <label for="headliners" class="block text-lg font-semibold">Headliners (choose 2 max):</label>
-        <select id="headliners" name="headliners" multiple class="w-full mt-2 p-2 rounded text-black" size="5"></select>
-        <p class="text-sm mt-1">Tyler, The Creator is already included.</p>
+        <label class="block text-lg font-semibold mb-2">Headliners (excluding Tyler, max 2):</label>
+        <input type="text" name="headliner1" placeholder="Headliner 1" class="w-full mb-2 p-2 rounded text-black" />
+        <input type="text" name="headliner2" placeholder="Headliner 2" class="w-full p-2 rounded text-black" />
       </div>
 
       <div>
-        <label for="artists" class="block text-lg font-semibold">Other Artists:</label>
-        <select id="artists" name="artists" multiple class="w-full mt-2 p-2 rounded text-black" size="15"></select>
+        <label class="block text-lg font-semibold mb-2">Other Artists (18–28 names):</label>
+        <div id="artistInputs" class="space-y-2">
+          <!-- 28 input fields generated via JS -->
+        </div>
       </div>
 
       <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded w-full">Submit Your Lineup</button>
-      <p id="errorMsg" class="text-red-400 text-sm mt-2 hidden">Please choose between 20 and 30 total artists.</p>
+      <p id="errorMsg" class="text-red-400 text-sm mt-2 hidden">Please enter between 20 and 30 total artists including Tyler.</p>
     </form>
 
     <div id="result" class="hidden mt-6 p-4 bg-white text-black rounded shadow">
@@ -34,37 +44,16 @@
   </div>
 
   <script>
-    const artistsList = [
-      "SZA", "The Hillbillies", "Kali Uchis", "Ice Spice", "Lil Yachty", "Toro y Moi", "Cuco",
-      "Fuerza Regida", "Earl Sweatshirt", "Willow", "Dominic Fike", "Rex Orange County",
-      "beabadoobee", "PinkPantheress", "redveil", "Kevin Abstract", "BADBADNOTGOOD",
-      "Teezo Touchdown", "Paris Texas", "AG Club", "Maxo", "d4vd", "Domo Genesis", "Liv.e",
-      "Maxo Kream", "Left Brain", "julie", "Fana Hues", "Khamari", "SPINALL", "Baby Rose",
-      "DAISY WORLD", "Mike G", "Balming Tiger"
-    ];
-
-    const headliners = [
-      "SZA", "The Hillbillies", "Kali Uchis", "Lil Yachty", "Fuerza Regida"
-    ];
-
-    const headlinerSelect = document.getElementById("headliners");
-    const artistSelect = document.getElementById("artists");
-
-    headliners.forEach(name => {
-      const opt = document.createElement("option");
-      opt.value = name;
-      opt.textContent = name;
-      headlinerSelect.appendChild(opt);
-    });
-
-    artistsList.forEach(name => {
-      if (!headliners.includes(name)) {
-        const opt = document.createElement("option");
-        opt.value = name;
-        opt.textContent = name;
-        artistSelect.appendChild(opt);
-      }
-    });
+    const artistInputs = document.getElementById("artistInputs");
+    const totalArtistSlots = 28; // Max allowed other than Tyler and 2 headliners
+    for (let i = 0; i < totalArtistSlots; i++) {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.name = `artist${i+1}`;
+      input.placeholder = `Artist ${i+1}`;
+      input.className = "w-full p-2 rounded text-black";
+      artistInputs.appendChild(input);
+    }
 
     const form = document.getElementById("lineupForm");
     const result = document.getElementById("result");
@@ -75,11 +64,14 @@
       e.preventDefault();
       resultList.innerHTML = "";
 
-      const selectedHeadliners = Array.from(headlinerSelect.selectedOptions).map(opt => opt.value);
-      const selectedArtists = Array.from(artistSelect.selectedOptions).map(opt => opt.value);
-      const total = selectedHeadliners.length + selectedArtists.length + 1; // +1 for Tyler
+      const headliner1 = form.headliner1.value.trim();
+      const headliner2 = form.headliner2.value.trim();
+      const artistFields = [...form.querySelectorAll('[name^="artist"]')];
+      const selectedArtists = artistFields.map(input => input.value.trim()).filter(name => name);
 
-      if (total < 20 || total > 30 || selectedHeadliners.length > 2) {
+      const total = 1 + (headliner1 ? 1 : 0) + (headliner2 ? 1 : 0) + selectedArtists.length; // +1 for Tyler
+
+      if (total < 20 || total > 30) {
         errorMsg.classList.remove("hidden");
         result.classList.add("hidden");
         return;
@@ -87,7 +79,11 @@
         errorMsg.classList.add("hidden");
       }
 
-      const fullLineup = ["Tyler, The Creator", ...selectedHeadliners, ...selectedArtists];
+      const fullLineup = ["Tyler, The Creator"];
+      if (headliner1) fullLineup.push(headliner1);
+      if (headliner2) fullLineup.push(headliner2);
+      fullLineup.push(...selectedArtists);
+
       fullLineup.forEach(artist => {
         const li = document.createElement("li");
         li.textContent = artist;
