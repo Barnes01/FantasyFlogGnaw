@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Camp Flog Gnaw 2025 Fantasy Lineup</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-b from-orange-300 via-red-400 to-black min-h-screen text-white font-sans">
+  <div class="max-w-2xl mx-auto p-6">
+    <h1 class="text-4xl font-bold text-center mb-4">Camp Flog Gnaw 2025 Fantasy Lineup</h1>
+    <p class="text-center mb-6">Pick your fantasy lineup! Tyler, The Creator is automatically included as a headliner. Select up to 30 artists (minimum 20).</p>
+
+    <form id="lineupForm" class="space-y-4">
+      <div>
+        <label for="headliners" class="block text-lg font-semibold">Headliners (choose 2 max):</label>
+        <select id="headliners" name="headliners" multiple class="w-full mt-2 p-2 rounded text-black" size="5"></select>
+        <p class="text-sm mt-1">Tyler, The Creator is already included.</p>
+      </div>
+
+      <div>
+        <label for="artists" class="block text-lg font-semibold">Other Artists:</label>
+        <select id="artists" name="artists" multiple class="w-full mt-2 p-2 rounded text-black" size="15"></select>
+      </div>
+
+      <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded w-full">Submit Your Lineup</button>
+      <p id="errorMsg" class="text-red-400 text-sm mt-2 hidden">Please choose between 20 and 30 total artists.</p>
+    </form>
+
+    <div id="result" class="hidden mt-6 p-4 bg-white text-black rounded shadow">
+      <h2 class="text-xl font-bold mb-2">Your Fantasy Lineup</h2>
+      <ul id="resultList" class="list-disc list-inside"></ul>
+    </div>
+  </div>
+
+  <script>
+    const artistsList = [
+      "SZA", "The Hillbillies", "Kali Uchis", "Ice Spice", "Lil Yachty", "Toro y Moi", "Cuco",
+      "Fuerza Regida", "Earl Sweatshirt", "Willow", "Dominic Fike", "Rex Orange County",
+      "beabadoobee", "PinkPantheress", "redveil", "Kevin Abstract", "BADBADNOTGOOD",
+      "Teezo Touchdown", "Paris Texas", "AG Club", "Maxo", "d4vd", "Domo Genesis", "Liv.e",
+      "Maxo Kream", "Left Brain", "julie", "Fana Hues", "Khamari", "SPINALL", "Baby Rose",
+      "DAISY WORLD", "Mike G", "Balming Tiger"
+    ];
+
+    const headliners = [
+      "SZA", "The Hillbillies", "Kali Uchis", "Lil Yachty", "Fuerza Regida"
+    ];
+
+    const headlinerSelect = document.getElementById("headliners");
+    const artistSelect = document.getElementById("artists");
+
+    headliners.forEach(name => {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      headlinerSelect.appendChild(opt);
+    });
+
+    artistsList.forEach(name => {
+      if (!headliners.includes(name)) {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        artistSelect.appendChild(opt);
+      }
+    });
+
+    const form = document.getElementById("lineupForm");
+    const result = document.getElementById("result");
+    const resultList = document.getElementById("resultList");
+    const errorMsg = document.getElementById("errorMsg");
+
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      resultList.innerHTML = "";
+
+      const selectedHeadliners = Array.from(headlinerSelect.selectedOptions).map(opt => opt.value);
+      const selectedArtists = Array.from(artistSelect.selectedOptions).map(opt => opt.value);
+      const total = selectedHeadliners.length + selectedArtists.length + 1; // +1 for Tyler
+
+      if (total < 20 || total > 30 || selectedHeadliners.length > 2) {
+        errorMsg.classList.remove("hidden");
+        result.classList.add("hidden");
+        return;
+      } else {
+        errorMsg.classList.add("hidden");
+      }
+
+      const fullLineup = ["Tyler, The Creator", ...selectedHeadliners, ...selectedArtists];
+      fullLineup.forEach(artist => {
+        const li = document.createElement("li");
+        li.textContent = artist;
+        resultList.appendChild(li);
+      });
+
+      result.classList.remove("hidden");
+    });
+  </script>
+</body>
+</html>
