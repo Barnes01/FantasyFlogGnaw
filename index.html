@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Camp Flog Gnaw 2025 Fantasy Lineup</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     body {
-      background-image: url('https://raw.githubusercontent.com/Barnes01/FantasyFlogGnaw/main/background.png'); /* Replace with your uploaded image URL */
+      background-image: url('https://raw.githubusercontent.com/Barnes01/FantasyFlogGnaw/main/background.png');
       background-size: cover;
       background-position: center;
       background-attachment: fixed;
@@ -15,7 +16,7 @@
   </style>
 </head>
 <body class="bg-black bg-opacity-70 min-h-screen text-white font-sans">
-  <div class="max-w-2xl mx-auto p-6 bg-black bg-opacity-70 rounded-xl shadow-lg mt-8">
+  <div class="max-w-3xl mx-auto p-6 bg-black bg-opacity-70 rounded-xl shadow-lg mt-8">
     <h1 class="text-4xl font-bold text-center mb-4">Camp Flog Gnaw 2025 Fantasy Lineup</h1>
     <p class="text-center mb-6">Pick your fantasy lineup! Tyler, The Creator is automatically included as a headliner. Fill in up to 30 artists (minimum 20).</p>
 
@@ -28,24 +29,39 @@
 
       <div>
         <label class="block text-lg font-semibold mb-2">Other Artists (18–28 names):</label>
-        <div id="artistInputs" class="space-y-2">
-          <!-- 28 input fields generated via JS -->
-        </div>
+        <div id="artistInputs" class="grid grid-cols-2 gap-4"></div>
+      </div>
+
+      <div>
+        <label class="block text-lg font-semibold mb-2">Your Name:</label>
+        <input type="text" name="username" placeholder="Enter your name" class="w-full p-2 rounded text-black" required />
       </div>
 
       <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded w-full">Submit Your Lineup</button>
-      <p id="errorMsg" class="text-red-400 text-sm mt-2 hidden">Please enter between 20 and 30 total artists excluding Tyler.</p>
+      <p id="errorMsg" class="text-red-400 text-sm mt-2 hidden">Please enter between 20 and 30 total artists including Tyler.</p>
     </form>
 
     <div id="result" class="hidden mt-6 p-4 bg-white text-black rounded shadow">
-      <h2 class="text-xl font-bold mb-2">Your Fantasy Lineup</h2>
-      <ul id="resultList" class="list-disc list-inside"></ul>
+      <div id="flyer" class="p-4 bg-gradient-to-b from-yellow-50 to-orange-100 rounded-xl">
+        <h2 class="text-2xl font-bold text-center">Fantasy Lineup for <span id="usernameDisplay"></span></h2>
+        <div class="text-center text-3xl font-bold mt-4 mb-4">Headliners</div>
+        <ul id="headlinerList" class="list-none flex justify-center gap-6 text-xl font-semibold flex-wrap"></ul>
+        <div class="text-center text-xl font-bold mt-6 mb-2">Other Artists</div>
+        <ul id="artistList" class="grid grid-cols-2 gap-2 text-sm list-disc list-inside"></ul>
+      </div>
+      <button id="downloadBtn" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Download Flyer</button>
+      <button id="viewAdmin" class="mt-4 ml-4 bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded">View All Submissions</button>
+    </div>
+
+    <div id="adminView" class="hidden mt-8 p-4 bg-white text-black rounded shadow">
+      <h2 class="text-xl font-bold mb-4">Submitted Lineups</h2>
+      <ul id="adminList" class="space-y-4 max-h-[400px] overflow-y-scroll"></ul>
     </div>
   </div>
 
   <script>
     const artistInputs = document.getElementById("artistInputs");
-    const totalArtistSlots = 28; // Max allowed other than Tyler and 2 headliners
+    const totalArtistSlots = 28;
     for (let i = 0; i < totalArtistSlots; i++) {
       const input = document.createElement("input");
       input.type = "text";
@@ -57,19 +73,29 @@
 
     const form = document.getElementById("lineupForm");
     const result = document.getElementById("result");
-    const resultList = document.getElementById("resultList");
+    const flyer = document.getElementById("flyer");
     const errorMsg = document.getElementById("errorMsg");
+    const resultList = document.getElementById("artistList");
+    const headlinerList = document.getElementById("headlinerList");
+    const usernameDisplay = document.getElementById("usernameDisplay");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const viewAdminBtn = document.getElementById("viewAdmin");
+    const adminView = document.getElementById("adminView");
+    const adminList = document.getElementById("adminList");
 
     form.addEventListener("submit", e => {
       e.preventDefault();
+
+      headlinerList.innerHTML = "";
       resultList.innerHTML = "";
 
       const headliner1 = form.headliner1.value.trim();
       const headliner2 = form.headliner2.value.trim();
+      const username = form.username.value.trim();
       const artistFields = [...form.querySelectorAll('[name^="artist"]')];
       const selectedArtists = artistFields.map(input => input.value.trim()).filter(name => name);
 
-      const total = 1 + (headliner1 ? 1 : 0) + (headliner2 ? 1 : 0) + selectedArtists.length; // +1 for Tyler
+      const total = 1 + (headliner1 ? 1 : 0) + (headliner2 ? 1 : 0) + selectedArtists.length;
 
       if (total < 20 || total > 30) {
         errorMsg.classList.remove("hidden");
@@ -79,19 +105,54 @@
         errorMsg.classList.add("hidden");
       }
 
-      const fullLineup = ["Tyler, The Creator"];
-      if (headliner1) fullLineup.push(headliner1);
-      if (headliner2) fullLineup.push(headliner2);
-      fullLineup.push(...selectedArtists);
+      const lineupData = {
+        username,
+        lineup: ["Tyler, The Creator"].concat(headliner1 ? [headliner1] : [], headliner2 ? [headliner2] : [], selectedArtists),
+        headliners: ["Tyler, The Creator", ...(headliner1 ? [headliner1] : []), ...(headliner2 ? [headliner2] : [])],
+        artists: selectedArtists
+      };
 
-      fullLineup.forEach(artist => {
+      usernameDisplay.textContent = username;
+
+      lineupData.headliners.forEach(name => {
         const li = document.createElement("li");
-        li.textContent = artist;
+        li.textContent = name;
+        headlinerList.appendChild(li);
+      });
+
+      lineupData.artists.forEach(name => {
+        const li = document.createElement("li");
+        li.textContent = name;
         resultList.appendChild(li);
       });
 
+      let savedLineups = JSON.parse(localStorage.getItem("floggnawLineups") || "[]");
+      savedLineups.push(lineupData);
+      localStorage.setItem("floggnawLineups", JSON.stringify(savedLineups));
+
       result.classList.remove("hidden");
+    });
+
+    downloadBtn.addEventListener("click", () => {
+      html2canvas(flyer).then(canvas => {
+        const link = document.createElement("a");
+        link.download = "floggnaw-fantasy-lineup.png";
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+    });
+
+    viewAdminBtn.addEventListener("click", () => {
+      adminList.innerHTML = "";
+      adminView.classList.toggle("hidden");
+      const savedLineups = JSON.parse(localStorage.getItem("floggnawLineups") || "[]");
+      savedLineups.forEach(entry => {
+        const li = document.createElement("li");
+        li.innerHTML = `<strong>${entry.username}</strong><br>Headliners: ${entry.headliners.join(", ")}<br>Artists: ${entry.artists.join(", ")}`;
+        adminList.appendChild(li);
+      });
     });
   </script>
 </body>
 </html>
+
