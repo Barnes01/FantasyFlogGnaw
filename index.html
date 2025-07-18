@@ -148,7 +148,17 @@
     function toggleAdminView() {
       adminList.innerHTML = "";
       adminView.classList.toggle("hidden");
-      const savedLineups = JSON.parse(localStorage.getItem("floggnawLineups") || "[]");
+    
+      let savedLineups = JSON.parse(localStorage.getItem("floggnawLineups") || "[]");
+    
+      // Assign missing IDs if they don't exist
+      savedLineups = savedLineups.map((entry, index) => {
+        if (!entry.id) entry.id = Date.now() + index;
+        return entry;
+      });
+    
+      localStorage.setItem("floggnawLineups", JSON.stringify(savedLineups));
+    
       savedLineups.forEach(entry => {
         const li = document.createElement("li");
         li.innerHTML = `
