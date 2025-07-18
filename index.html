@@ -106,6 +106,7 @@
       }
 
       const lineupData = {
+        id: Date.now(),
         username,
         lineup: ["Tyler, The Creator"].concat(headliner1 ? [headliner1] : [], headliner2 ? [headliner2] : [], selectedArtists),
         headliners: ["Tyler, The Creator", ...(headliner1 ? [headliner1] : []), ...(headliner2 ? [headliner2] : [])],
@@ -113,13 +114,11 @@
       };
 
       usernameDisplay.textContent = username;
-
       lineupData.headliners.forEach(name => {
         const li = document.createElement("li");
         li.textContent = name;
         headlinerList.appendChild(li);
       });
-
       lineupData.artists.forEach(name => {
         const li = document.createElement("li");
         li.textContent = name;
@@ -143,14 +142,40 @@
     });
 
     viewAdminBtn.addEventListener("click", () => {
+      toggleAdminView();
+    });
+
+    function toggleAdminView() {
       adminList.innerHTML = "";
       adminView.classList.toggle("hidden");
       const savedLineups = JSON.parse(localStorage.getItem("floggnawLineups") || "[]");
       savedLineups.forEach(entry => {
         const li = document.createElement("li");
-        li.innerHTML = `<strong>${entry.username}</strong><br>Headliners: ${entry.headliners.join(", ")}<br>Artists: ${entry.artists.join(", ")}`;
+        li.innerHTML = `
+          <div>
+            <strong>${entry.username}</strong><br>
+            Headliners: ${entry.headliners.join(", ")}<br>
+            Artists: ${entry.artists.join(", ")}
+            <br><button onclick="deleteSubmission(${entry.id})" class="mt-1 bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded">Delete</button>
+          </div>
+        `;
         adminList.appendChild(li);
       });
+    }
+
+    function deleteSubmission(id) {
+      let savedLineups = JSON.parse(localStorage.getItem("floggnawLineups") || "[]");
+      const updatedLineups = savedLineups.filter(entry => entry.id !== id);
+      localStorage.setItem("floggnawLineups", JSON.stringify(updatedLineups));
+      toggleAdminView();
+    }
+
+    // Load admin view on page load if any data exists
+    document.addEventListener("DOMContentLoaded", () => {
+      const saved = JSON.parse(localStorage.getItem("floggnawLineups") || "[]");
+      if (saved.length > 0) {
+        toggleAdminView();
+      }
     });
   </script>
 </body>
