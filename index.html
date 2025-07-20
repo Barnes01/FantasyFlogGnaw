@@ -6,6 +6,25 @@
   <title>Camp Flog Gnaw 2025 Fantasy Lineup</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDj4pCpLagYMi1Vvzu6V4VP9wUHH2j2jLI",
+      authDomain: "fantasy-flog-gnaw.firebaseapp.com",
+      projectId: "fantasy-flog-gnaw",
+      storageBucket: "fantasy-flog-gnaw.firebasestorage.app",
+      messagingSenderId: "79117895903",
+      appId: "1:79117895903:web:8ede0f174069978e41816a",
+      measurementId: "G-1TENBVPPPW"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+  </script>
+
   <style>
     body {
       background-image: url('https://raw.githubusercontent.com/Barnes01/FantasyFlogGnaw/main/background.png');
@@ -83,7 +102,7 @@
     const adminView = document.getElementById("adminView");
     const adminList = document.getElementById("adminList");
 
-    form.addEventListener("submit", e => {
+    form.addEventListener("submit", async e => {
       e.preventDefault();
 
       headlinerList.innerHTML = "";
@@ -106,11 +125,10 @@
       }
 
       const lineupData = {
-        id: Date.now(),
         username,
-        lineup: ["Tyler, The Creator"].concat(headliner1 ? [headliner1] : [], headliner2 ? [headliner2] : [], selectedArtists),
         headliners: ["Tyler, The Creator", ...(headliner1 ? [headliner1] : []), ...(headliner2 ? [headliner2] : [])],
-        artists: selectedArtists
+        artists: selectedArtists,
+        timestamp: new Date().toISOString()
       };
 
       usernameDisplay.textContent = username;
@@ -125,10 +143,7 @@
         resultList.appendChild(li);
       });
 
-      let savedLineups = JSON.parse(localStorage.getItem("floggnawLineups") || "[]");
-      savedLineups.push(lineupData);
-      localStorage.setItem("floggnawLineups", JSON.stringify(savedLineups));
-
+      await db.collection("lineups").add(lineupData);
       result.classList.remove("hidden");
     });
 
@@ -141,54 +156,25 @@
       });
     });
 
-    viewAdminBtn.addEventListener("click", () => {
-      toggleAdminView();
-    });
-
-    function toggleAdminView() {
+    viewAdminBtn.addEventListener("click", async () => {
       adminList.innerHTML = "";
       adminView.classList.toggle("hidden");
-    
-      let savedLineups = JSON.parse(localStorage.getItem("floggnawLineups") || "[]");
-    
-      // Assign missing IDs if they don't exist
-      savedLineups = savedLineups.map((entry, index) => {
-        if (!entry.id) entry.id = Date.now() + index;
-        return entry;
-      });
-    
-      localStorage.setItem("floggnawLineups", JSON.stringify(savedLineups));
-    
-      savedLineups.forEach(entry => {
+
+      const snapshot = await db.collection("lineups").orderBy("timestamp", "desc").get();
+      snapshot.forEach(doc => {
+        const entry = doc.data();
         const li = document.createElement("li");
         li.innerHTML = `
           <div>
             <strong>${entry.username}</strong><br>
             Headliners: ${entry.headliners.join(", ")}<br>
             Artists: ${entry.artists.join(", ")}
-            <br><button onclick="deleteSubmission(${entry.id})" class="mt-1 bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded">Delete</button>
           </div>
         `;
         adminList.appendChild(li);
       });
-    }
-
-    function deleteSubmission(id) {
-      let savedLineups = JSON.parse(localStorage.getItem("floggnawLineups") || "[]");
-      const updatedLineups = savedLineups.filter(entry => entry.id !== id);
-      localStorage.setItem("floggnawLineups", JSON.stringify(updatedLineups));
-      toggleAdminView();
-    }
-
-    // Load admin view on page load if any data exists
-    document.addEventListener("DOMContentLoaded", () => {
-      const saved = JSON.parse(localStorage.getItem("floggnawLineups") || "[]");
-      if (saved.length > 0) {
-        toggleAdminView();
-      }
     });
   </script>
 </body>
 </html>
-
 
